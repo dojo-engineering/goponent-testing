@@ -1,0 +1,26 @@
+package examples
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func hello(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(w, "hello")
+}
+
+func headers(w http.ResponseWriter, req *http.Request) {
+	for name, headers := range req.Header {
+		for _, h := range headers {
+			fmt.Fprintf(w, "%v: %v\n", name, h)
+		}
+	}
+}
+
+func buildServer() http.Handler {
+	server := http.NewServeMux()
+
+	server.HandleFunc("/hello", hello)
+	server.HandleFunc("/headers", headers)
+	return server
+}
