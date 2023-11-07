@@ -17,10 +17,15 @@ type Test struct {
 	Steps []Step
 }
 
+type Action interface {
+	Execute(t *testing.T, context *Context, stepContext *Context) error
+}
+
 type Step struct {
 	Name           string
-	Request        RequestGenerator
-	Assertions     ResponseAsserter
+	Arrange        Action
+	Act            Action
+	Assertions     Action
 	ContextSetters []ContextSetter
 }
 
@@ -32,26 +37,52 @@ func RunTests(t *testing.T, tests []Test, baseUrl string) {
 
 func RunTest(t *testing.T, test Test, baseUrl string) {
 	t.Run(test.Name, func(t *testing.T) {
+		testContext := newContext()
+		ContextSet(testContext, "baseUrl", baseUrl)
 		for num, step := range test.Steps {
 			t.Run(step.Name, func(t *testing.T) {
-				body := step.Request.GetBody()
+				stepContext := newContext()
 
-				req, err := http.NewRequest(http.MethodPost, baseUrl+step.Request.GetPath(), body)
-				if err != nil {
-					t.Fatalf("error making request for step: %d - %s: %+v", num, step.Name, err)
+				if step.Arrange != nil {
+					err := step.Arrange.Execute(t, testContext, stepContext)
+					if err != nil {
+						t.Fatalf("error arraging for step: %d - %s: %+v", num, step.Name, err)
+					}
 				}
-				req.Header.Set("Content-Type", step.Request.GetContentType())
-				res, err := http.DefaultClient.Do(req)
+
+				if step.Act == nil {
+					t.Fatalf("step has no act: %d - %s", num, step.Name)
+				}
+				err := step.Act.Execute(t, testContext, stepContext)
 				if err != nil {
-					t.Fatalf("error making request for step: %d - %s: %+v", num, step.Name, err)
+					t.Fatalf("error acting for step: %d - %s: %+v", num, step.Name, err)
 				}
 
 				if step.Assertions != nil {
-					err := step.Assertions.Assert(t, res)
+					err = step.Assertions.Execute(t, testContext, stepContext)
 					if err != nil {
-						t.Fatalf("error making request for step: %d - %s: %+v", num, step.Name, err)
+						t.Fatalf("error asserting for step: %d - %s: %+v", num, step.Name, err)
 					}
 				}
+
+				//body := step.Request.GetBody()
+				//
+				//req, err := http.NewRequest(http.MethodPost, baseUrl+step.Request.GetPath(), body)
+				//if err != nil {
+				//	t.Fatalf("error making request for step: %d - %s: %+v", num, step.Name, err)
+				//}
+				//req.Header.Set("Content-Type", step.Request.GetContentType())
+				//res, err := http.DefaultClient.Do(req)
+				//if err != nil {
+				//	t.Fatalf("error making request for step: %d - %s: %+v", num, step.Name, err)
+				//}
+				//
+				//if step.Assertions != nil {
+				//	err := step.Assertions.Assert(t, res)
+				//	if err != nil {
+				//		t.Fatalf("error making request for step: %d - %s: %+v", num, step.Name, err)
+				//	}
+				//}
 
 			})
 		}

@@ -14,11 +14,13 @@ func Test_ExampleServer(t *testing.T) {
 			Steps: []goponent.Step{
 				{
 					Name: "Get request to /hello",
-					Request: goponent.StringRequestGenerator{
-						Method: "GET",
-						Path:   "/hello",
+
+					Act: goponent.HttpRequestAction{
+						Method:      "GET",
+						Path:        "/hello",
+						ContentType: "text/plain",
 					},
-					Assertions: goponent.StringResponseAsserter{
+					Assertions: goponent.HttpResponseAsserter{
 						ExpectedBody:       "hello",
 						ExpectedStatusCode: 200,
 					},
@@ -32,13 +34,48 @@ func Test_ExampleServer(t *testing.T) {
 			Steps: []goponent.Step{
 				{
 					Name: "Get request to /invalid",
-					Request: goponent.StringRequestGenerator{
+					Act: goponent.HttpRequestAction{
 						Method: "GET",
 						Path:   "/invalid",
 					},
-					Assertions: goponent.StringResponseAsserter{
+					Assertions: goponent.HttpResponseAsserter{
 						ExpectedBody:       "404 page not found\n",
 						ExpectedStatusCode: 404,
+					},
+
+					ContextSetters: nil,
+				},
+			},
+		},
+		{
+			Name: "Post to create car endpoint creates a new car",
+			Steps: []goponent.Step{
+				{
+					Name: "Post to car endpoint returns 200",
+					Act: goponent.JsonRequestAction[Car]{
+						Method: "POST",
+						Body: Car{
+							Make:  "Subaru",
+							Model: "Outback",
+						},
+						Path: "/car",
+					},
+					Assertions: goponent.JsonResponseAsserter[Car]{
+						ExpectedBody:       Car{Make: "Subaru", Model: "Outback", Id: "1"},
+						ExpectedStatusCode: 200,
+					},
+
+					ContextSetters: nil,
+				},
+				{
+					Name: "Get car returns 200 and car",
+					Act: goponent.HttpRequestAction{
+						Method: "GET",
+						Path:   "/car/1",
+					},
+					Assertions: goponent.JsonResponseAsserter[Car]{
+						ExpectedBody:       Car{Make: "Subaru", Model: "Outback", Id: "1"},
+						ExpectedStatusCode: 200,
 					},
 
 					ContextSetters: nil,
