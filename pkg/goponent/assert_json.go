@@ -8,14 +8,15 @@ import (
 	"testing"
 )
 
-var _ Action = JsonResponseAsserter[string]{}
+var _ Asserter = JsonResponseAsserter[string]{}
 
 type JsonResponseAsserter[T any] struct {
 	ExpectedBody       T
+	ExpectedBodyFunc   func(ctx *Context) T
 	ExpectedStatusCode int
 }
 
-func (j JsonResponseAsserter[T]) Execute(t *testing.T, context *Context, stepContext *Context) error {
+func (j JsonResponseAsserter[T]) Assert(t *testing.T, context *Context, stepContext *Context) error {
 	res, ok := ContextGet[*http.Response](stepContext, "response")
 	if !ok {
 		t.Error("no response in context")
@@ -29,13 +30,19 @@ func (j JsonResponseAsserter[T]) Execute(t *testing.T, context *Context, stepCon
 	}
 
 	var actualBody T
+	t.Logf("response body: %s", string(b))
 	err = json.Unmarshal(b, &actualBody)
 	if err != nil {
 		t.Error(err)
 		return err
 	}
 
-	AssertEqual(t, j.ExpectedBody, actualBody)
+	expectedBody := j.ExpectedBody
+	if j.ExpectedBodyFunc != nil {
+		expectedBody = j.ExpectedBodyFunc(context)
+	}
+
+	AssertEqual(t, expectedBody, actualBody)
 	AssertEqual(t, j.ExpectedStatusCode, res.StatusCode)
 
 	return nil

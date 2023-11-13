@@ -7,14 +7,14 @@ import (
 	"testing"
 )
 
-var _ Action = HttpResponseAsserter{}
+var _ Asserter = HttpResponseAsserter{}
 
 type HttpResponseAsserter struct {
 	ExpectedBody       string
 	ExpectedStatusCode int
 }
 
-func (h HttpResponseAsserter) Execute(t *testing.T, context *Context, stepContext *Context) error {
+func (h HttpResponseAsserter) Assert(t *testing.T, context *Context, stepContext *Context) error {
 	res, ok := ContextGet[*http.Response](stepContext, "response")
 	if !ok {
 		t.Error("no response in context")

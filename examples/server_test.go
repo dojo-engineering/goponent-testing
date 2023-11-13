@@ -24,8 +24,6 @@ func Test_ExampleServer(t *testing.T) {
 						ExpectedBody:       "hello",
 						ExpectedStatusCode: 200,
 					},
-
-					ContextSetters: nil,
 				},
 			},
 		},
@@ -60,24 +58,47 @@ func Test_ExampleServer(t *testing.T) {
 						},
 						Path: "/car",
 					},
+					ContextSetters: goponent.ContextSetterJson[Car]{
+						Properties: map[string]func(response Car) any{
+							"carId": func(response Car) any {
+								return response.Id
+							},
+						},
+					},
 					Assertions: goponent.JsonResponseAsserter[Car]{
-						ExpectedBody:       Car{Make: "Subaru", Model: "Outback", Id: "1"},
+						ExpectedBodyFunc: func(ctx *goponent.Context) Car {
+							return Car{Make: "Subaru", Model: "Outback", Id: ctx.GetString("carId")}
+						},
 						ExpectedStatusCode: 200,
 					},
-
-					ContextSetters: nil,
 				},
 				{
 					Name: "Get car returns 200 and car",
+					Arrange: []goponent.Arranger{
+						goponent.ArrangeHttpDependencyAction{
+							Host:   "https://www.example.com",
+							Path:   "/example-payload",
+							Method: "GET",
+							Body:   "1234",
+						},
+					},
 					Act: goponent.HttpRequestAction{
 						Method: "GET",
-						Path:   "/car/1",
+						PathFunc: func(ctx *goponent.Context) string {
+							return "/car/" + ctx.GetString("carId")
+						},
 					},
 					Assertions: goponent.JsonResponseAsserter[Car]{
-						ExpectedBody:       Car{Make: "Subaru", Model: "Outback", Id: "1"},
+						ExpectedBodyFunc: func(ctx *goponent.Context) Car {
+							return Car{
+								Make:           "Subaru",
+								Model:          "Outback",
+								Id:             ctx.GetString("carId"),
+								RegistrationId: "1234",
+							}
+						},
 						ExpectedStatusCode: 200,
 					},
-
 					ContextSetters: nil,
 				},
 			},

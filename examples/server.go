@@ -3,15 +3,19 @@ package examples
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"slices"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type Car struct {
-	Make  string
-	Model string
-	Id    string
+	Make           string
+	Model          string
+	Id             string
+	RegistrationId string
 }
 
 var cars []Car
@@ -39,7 +43,23 @@ func carGet(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err := json.NewEncoder(w).Encode(cars[i])
+	car := cars[i]
+
+	res, err := http.Get("https://www.example.com/example-payload")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	car.RegistrationId = string(b)
+
+	err = json.NewEncoder(w).Encode(car)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -54,7 +74,7 @@ func carPost(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	car.Id = "1" //uuid.NewString()
+	car.Id = uuid.NewString()
 	cars = append(cars, car)
 
 	err = json.NewEncoder(w).Encode(car)
