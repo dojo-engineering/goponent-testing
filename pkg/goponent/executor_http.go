@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-var _ Actor = HttpRequestAction{}
+var _ Executor = HttpRequestExecutor{}
 
-type HttpRequestAction struct {
+type HttpRequestExecutor struct {
 	Method      string
 	ContentType string
 	Path        string
@@ -17,7 +17,7 @@ type HttpRequestAction struct {
 	Body        []byte
 }
 
-func (h HttpRequestAction) Act(t *testing.T, context *Context, stepContext *Context) error {
+func (h HttpRequestExecutor) Execute(t *testing.T, context *Context, stepContext *Context) error {
 	baseUrl, ok := ContextGet[string](context, "baseUrl")
 	if !ok {
 		t.Error("no baseUrl in context")

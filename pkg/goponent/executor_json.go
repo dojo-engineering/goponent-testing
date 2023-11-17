@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-var _ Actor = JsonRequestAction[string]{}
+var _ Executor = JsonRequestExecutor[string]{}
 
-type JsonRequestAction[T any] struct {
+type JsonRequestExecutor[T any] struct {
 	Method   string
 	Path     string
 	PathFunc func(ctx *Context) string
@@ -15,7 +15,7 @@ type JsonRequestAction[T any] struct {
 	BodyFunc func(ctx *Context) T
 }
 
-func (j JsonRequestAction[T]) Act(t *testing.T, context *Context, stepContext *Context) error {
+func (j JsonRequestExecutor[T]) Execute(t *testing.T, context *Context, stepContext *Context) error {
 	body := j.Body
 	if j.BodyFunc != nil {
 		body = j.BodyFunc(context)
@@ -30,12 +30,12 @@ func (j JsonRequestAction[T]) Act(t *testing.T, context *Context, stepContext *C
 	if j.PathFunc != nil {
 		path = j.PathFunc(context)
 	}
-	httpAction := HttpRequestAction{
+	httpAction := HttpRequestExecutor{
 		Method:      j.Method,
 		ContentType: "application/json",
 		Path:        path,
 		Body:        b,
 	}
-	return httpAction.Act(t, context, stepContext)
+	return httpAction.Execute(t, context, stepContext)
 
 }

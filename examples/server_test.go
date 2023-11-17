@@ -14,8 +14,7 @@ func Test_ExampleServer(t *testing.T) {
 			Steps: []goponent.Step{
 				{
 					Name: "Get request to /hello",
-
-					Act: goponent.HttpRequestAction{
+					Executor: goponent.HttpRequestExecutor{
 						Method:      "GET",
 						Path:        "/hello",
 						ContentType: "text/plain",
@@ -32,7 +31,7 @@ func Test_ExampleServer(t *testing.T) {
 			Steps: []goponent.Step{
 				{
 					Name: "Get request to /invalid",
-					Act: goponent.HttpRequestAction{
+					Executor: goponent.HttpRequestExecutor{
 						Method: "GET",
 						Path:   "/invalid",
 					},
@@ -40,7 +39,6 @@ func Test_ExampleServer(t *testing.T) {
 						ExpectedBody:       "404 page not found\n",
 						ExpectedStatusCode: 404,
 					},
-
 					ContextSetters: nil,
 				},
 			},
@@ -50,7 +48,7 @@ func Test_ExampleServer(t *testing.T) {
 			Steps: []goponent.Step{
 				{
 					Name: "Post to car endpoint returns 200",
-					Act: goponent.JsonRequestAction[Car]{
+					Executor: goponent.JsonRequestExecutor[Car]{
 						Method: "POST",
 						Body: Car{
 							Make:  "Subaru",
@@ -74,7 +72,7 @@ func Test_ExampleServer(t *testing.T) {
 				},
 				{
 					Name: "Get car returns 200 and car",
-					Arrange: []goponent.Arranger{
+					Setups: []goponent.Setup{
 						goponent.ArrangeHttpDependencyAction{
 							Host:   "https://www.example.com",
 							Path:   "/example-payload",
@@ -82,7 +80,7 @@ func Test_ExampleServer(t *testing.T) {
 							Body:   "1234",
 						},
 					},
-					Act: goponent.HttpRequestAction{
+					Executor: goponent.HttpRequestExecutor{
 						Method: "GET",
 						PathFunc: func(ctx *goponent.Context) string {
 							return "/car/" + ctx.GetString("carId")

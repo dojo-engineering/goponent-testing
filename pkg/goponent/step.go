@@ -16,12 +16,12 @@ type Test struct {
 	Steps []Step
 }
 
-type Arranger interface {
-	Arrange(t *testing.T, context *Context, stepContext *Context) error
+type Setup interface {
+	Setup(t *testing.T, context *Context, stepContext *Context) error
 }
 
-type Actor interface {
-	Act(t *testing.T, context *Context, stepContext *Context) error
+type Executor interface {
+	Execute(t *testing.T, context *Context, stepContext *Context) error
 }
 
 type ContextSetter interface {
@@ -34,8 +34,8 @@ type Asserter interface {
 
 type Step struct {
 	Name           string
-	Arrange        []Arranger
-	Act            Actor
+	Setups         []Setup
+	Executor       Executor
 	ContextSetters ContextSetter
 	Assertions     Asserter
 }
@@ -56,19 +56,19 @@ func RunTest(t *testing.T, test Test, baseUrl string) {
 			t.Run(step.Name, func(t *testing.T) {
 				stepContext := newContext()
 
-				if step.Arrange != nil {
-					for _, a := range step.Arrange {
-						err := a.Arrange(t, testContext, stepContext)
+				if step.Setups != nil {
+					for _, a := range step.Setups {
+						err := a.Setup(t, testContext, stepContext)
 						if err != nil {
 							t.Fatalf("error arraging for step: %d - %s: %+v", num, step.Name, err)
 						}
 					}
 				}
 
-				if step.Act == nil {
+				if step.Executor == nil {
 					t.Fatalf("step has no act: %d - %s", num, step.Name)
 				}
-				err := step.Act.Act(t, testContext, stepContext)
+				err := step.Executor.Execute(t, testContext, stepContext)
 				if err != nil {
 					t.Fatalf("error acting for step: %d - %s: %+v", num, step.Name, err)
 				}

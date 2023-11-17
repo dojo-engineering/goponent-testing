@@ -8,7 +8,7 @@ import (
 	"github.com/h2non/gock"
 )
 
-var _ Arranger = ArrangeHttpDependencyAction{}
+var _ Setup = ArrangeHttpDependencyAction{}
 
 type ArrangeHttpDependencyAction struct {
 	Method     string
@@ -18,7 +18,7 @@ type ArrangeHttpDependencyAction struct {
 	Path       string
 }
 
-func (a ArrangeHttpDependencyAction) Arrange(t *testing.T, context *Context, stepContext *Context) error {
+func (a ArrangeHttpDependencyAction) Setup(t *testing.T, context *Context, stepContext *Context) error {
 	gock.NetworkingFilter(func(request *http.Request) bool {
 		return !strings.Contains(request.URL.Host, a.Host)
 	})
