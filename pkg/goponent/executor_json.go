@@ -13,6 +13,7 @@ type JsonRequestExecutor[T any] struct {
 	PathFunc func(ctx *Context) string
 	Body     T
 	BodyFunc func(ctx *Context) T
+	Headers  map[string]string
 }
 
 func (j JsonRequestExecutor[T]) Execute(t *testing.T, context *Context, stepContext *Context) error {
@@ -35,6 +36,7 @@ func (j JsonRequestExecutor[T]) Execute(t *testing.T, context *Context, stepCont
 		ContentType: "application/json",
 		Path:        path,
 		Body:        b,
+		Headers:     j.Headers,
 	}
 	return httpAction.Execute(t, context, stepContext)
 

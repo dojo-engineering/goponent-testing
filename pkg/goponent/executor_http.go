@@ -15,6 +15,7 @@ type HttpRequestExecutor struct {
 	Path        string
 	PathFunc    func(ctx *Context) string
 	Body        []byte
+	Headers     map[string]string
 }
 
 func (h HttpRequestExecutor) Execute(t *testing.T, context *Context, stepContext *Context) error {
@@ -34,6 +35,9 @@ func (h HttpRequestExecutor) Execute(t *testing.T, context *Context, stepContext
 		return err
 	}
 	req.Header.Set("Content-Type", h.ContentType)
+	for key, value := range h.Headers {
+		req.Header.Set(key, value)
+	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
