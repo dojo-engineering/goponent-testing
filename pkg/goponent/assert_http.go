@@ -30,3 +30,20 @@ func (h HttpResponseAsserter) Assert(t *testing.T, context *Context, stepContext
 	AssertEqual(t, h.ExpectedStatusCode, res.StatusCode)
 	return nil
 }
+
+var _ Asserter = HttpResponseStatusCodeAsserter{}
+
+type HttpResponseStatusCodeAsserter struct {
+	ExpectedStatusCode int
+}
+
+func (h HttpResponseStatusCodeAsserter) Assert(t *testing.T, context *Context, stepContext *Context) error {
+	res, ok := ContextGet[*http.Response](stepContext, "response")
+	if !ok {
+		t.Error("no response in context")
+		return errors.New("no response in context")
+	}
+
+	AssertEqual(t, h.ExpectedStatusCode, res.StatusCode)
+	return nil
+}
