@@ -17,23 +17,8 @@ type JsonResponseAsserter[T any] struct {
 }
 
 func (j JsonResponseAsserter[T]) Assert(t *testing.T, context *Context, stepContext *Context) error {
-	res, ok := ContextGet[*http.Response](stepContext, "response")
-	if !ok {
-		t.Error("no response in context")
-		return errors.New("no response in context")
-	}
-
-	b, err := io.ReadAll(res.Body)
+	actualBody, res, err := extractBody[T](t, stepContext)
 	if err != nil {
-		t.Error(err)
-		return err
-	}
-
-	var actualBody T
-	t.Logf("response body: %s", string(b))
-	err = json.Unmarshal(b, &actualBody)
-	if err != nil {
-		t.Error(err)
 		return err
 	}
 
@@ -46,4 +31,44 @@ func (j JsonResponseAsserter[T]) Assert(t *testing.T, context *Context, stepCont
 	AssertEqual(t, j.ExpectedStatusCode, res.StatusCode)
 
 	return nil
+}
+
+var _ Asserter = JsonFuncAsserter[string]{}
+
+type JsonFuncAsserter[T any] struct {
+	ExpectedFunc       func(ctx *Context, body T)
+	ExpectedStatusCode int
+}
+
+func (j JsonFuncAsserter[T]) Assert(t *testing.T, context *Context, stepContext *Context) error {
+	actualBody, res, err := extractBody[T](t, stepContext)
+	if err != nil {
+		return err
+	}
+	j.ExpectedFunc(context, actualBody)
+	AssertEqual(t, j.ExpectedStatusCode, res.StatusCode)
+	return nil
+}
+
+func extractBody[T any](t *testing.T, stepContext *Context) (T, *http.Response, error) {
+	var actualBody T
+	res, ok := ContextGet[*http.Response](stepContext, "response")
+	if !ok {
+		t.Error("no response in context")
+		return actualBody, res, errors.New("no response in context")
+	}
+
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Error(err)
+		return actualBody, res, err
+	}
+
+	t.Logf("response body: %s", string(b))
+	err = json.Unmarshal(b, &actualBody)
+	if err != nil {
+		t.Error(err)
+		return actualBody, res, err
+	}
+	return actualBody, res, nil
 }
