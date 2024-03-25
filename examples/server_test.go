@@ -73,7 +73,7 @@ func Test_ExampleServer(t *testing.T) {
 				{
 					Name: "Get car returns 200 and car",
 					Setups: []goponent.Setup{
-						goponent.ArrangeHttpDependencyAction{
+						goponent.SetupHttpDependencyAction{
 							Host:   "https://www.example.com",
 							Path:   "/example-payload",
 							Method: "GET",
