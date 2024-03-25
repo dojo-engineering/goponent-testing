@@ -36,7 +36,7 @@ func (j JsonResponseAsserter[T]) Assert(t *testing.T, context *Context, stepCont
 var _ Asserter = JsonFuncAsserter[string]{}
 
 type JsonFuncAsserter[T any] struct {
-	ExpectedFunc       func(ctx *Context, body T)
+	ExpectedFunc       func(ctx *Context, t *testing.T, body T)
 	ExpectedStatusCode int
 }
 
@@ -45,7 +45,7 @@ func (j JsonFuncAsserter[T]) Assert(t *testing.T, context *Context, stepContext 
 	if err != nil {
 		return err
 	}
-	j.ExpectedFunc(context, actualBody)
+	j.ExpectedFunc(context, t, actualBody)
 	AssertEqual(t, j.ExpectedStatusCode, res.StatusCode)
 	return nil
 }
